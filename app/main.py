@@ -1,13 +1,14 @@
+
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
+from app.api.transactions import router as transaction_router
 from app.core.config import settings
 from app.core.constants import HEALTH_ENDPOINT, ROOT_ENDPOINT
 from app.core.logger import app_logger
+from app.core.version import APP_DESCRIPTION, APP_NAME, VERSION
 
-from app.core.version import (APP_DESCRIPTION, APP_NAME,VERSION,)
-from app.api.transactions import router as transaction_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -39,9 +40,6 @@ async def root():
     }
 
 
-app.include_router(transaction_router)
-
-
 @app.get(HEALTH_ENDPOINT)
 async def health():
     return {
@@ -49,3 +47,7 @@ async def health():
         "application": settings.app_name,
         "version": settings.app_version,
     }
+
+
+app.include_router(transaction_router)
+print(app.routes)
