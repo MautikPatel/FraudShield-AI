@@ -4,6 +4,8 @@ Transaction Service
 Handles database operations for transactions.
 """
 
+from sqlalchemy import func
+
 from app.database.session import SessionLocal
 from app.models.transaction import Transaction
 
@@ -82,6 +84,64 @@ def get_transaction_by_id(transaction_id: str):
             .filter(Transaction.transaction_id == transaction_id)
             .first()
         )
+
+    finally:
+        db.close()
+
+        
+def get_transaction_stats():
+    """
+    Return summary statistics for transactions.
+    """
+
+    db = SessionLocal()
+
+    try:
+        total_transactions = db.query(Transaction).count()
+
+        blocked_transactions = (
+            db.query(Transaction)
+            .filter(Transaction.fraud_status == "BLOCKED")
+            .count()
+        )
+
+        review_transactions = (
+            db.query(Transaction)
+            .filter(Transaction.fraud_status == "REVIEW")
+            .count()
+        )
+
+        approved_transactions = (
+            db.query(Transaction)
+            .filter(Transaction.fraud_status == "APPROVED")
+            .count()
+        )
+
+        total_amount = (
+            db.query(func.sum(Transaction.amount)).scalar()
+            or 0
+        )
+
+        average_risk_score = (
+            db.query(func.avg(Transaction.risk_score)).scalar()
+            or 0
+        )
+
+        blocked_rate = (
+            (blocked_transactions / total_transactions) * 100
+            if total_transactions > 0
+            else 0
+        )
+
+        return {
+            "total_transactions": total_transactions,
+            "blocked_transactions": blocked_transactions,
+            "review_transactions": review_transactions,
+            "approved_transactions": approved_transactions,
+            "blocked_rate": round(blocked_rate, 2),
+            "total_transaction_amount": float(total_amount),
+            "average_risk_score": round(float(average_risk_score), 2),
+        }
 
     finally:
         db.close()

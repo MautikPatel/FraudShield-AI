@@ -106,3 +106,6 @@ class Transaction(Base):
         default=datetime.utcnow,
         onupdate=datetime.utcnow,
     )
+
+
+    

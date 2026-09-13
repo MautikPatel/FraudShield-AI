@@ -9,13 +9,17 @@ from fastapi import APIRouter
 from app.services.transaction_generator import (
     generate_transaction,
     generate_transactions,
+    generate_fraud_transaction,
 )
 
 from app.services.transaction_service import (
     save_transaction,
     save_transactions,
     get_transactions,
+    get_transaction_by_id,
+    get_transaction_stats,
 )
+
 
 from app.services.rule_engine import RuleEngine
 
@@ -26,6 +30,7 @@ router = APIRouter(
 )
 
 rule_engine = RuleEngine()
+
 
 @router.post("/generate")
 def generate_one_transaction():
@@ -52,6 +57,31 @@ def generate_one_transaction():
         "status": saved.fraud_status,
     }
 
+@router.post("/generate/fraud")
+def generate_one_fraud_transaction():
+    """
+    Generate a high-risk fraud transaction and save it to PostgreSQL.
+    """
+
+    transaction = generate_fraud_transaction()
+
+    result = rule_engine.evaluate(transaction)
+
+    transaction["risk_score"] = result["risk_score"]
+    transaction["fraud_status"] = result["fraud_status"]
+
+    saved = save_transaction(transaction)
+
+    return {
+        "message": "Fraud transaction created successfully",
+        "id": saved.id,
+        "transaction_id": saved.transaction_id,
+        "merchant": saved.merchant_name,
+        "amount": float(saved.amount),
+        "country": saved.country,
+        "risk_score": float(saved.risk_score),
+        "status": saved.fraud_status,
+    }
 
 @router.post("/generate/{count}")
 def generate_multiple_transactions(count: int):
@@ -78,6 +108,7 @@ def generate_multiple_transactions(count: int):
         "message": f"{total} transactions generated successfully.",
         "generated": total,
     }
+
 
 @router.get("/")
 def get_all_transactions(limit: int = 100):
@@ -106,3 +137,44 @@ def get_all_transactions(limit: int = 100):
         }
         for transaction in transactions
     ]
+
+
+@router.get("/stats")
+def get_transaction_statistics():
+    """
+    Return transaction and fraud statistics.
+    """
+
+    return get_transaction_stats()
+
+@router.get("/{transaction_id}")
+def get_single_transaction(transaction_id: str):
+    """
+    Return a single transaction by transaction ID.
+    """
+
+    transaction = get_transaction_by_id(transaction_id)
+
+    if transaction is None:
+        return {
+            "message": "Transaction not found.",
+            "transaction_id": transaction_id,
+        }
+
+    return {
+        "id": transaction.id,
+        "transaction_id": transaction.transaction_id,
+        "customer_id": transaction.customer_id,
+        "merchant_id": transaction.merchant_id,
+        "merchant_name": transaction.merchant_name,
+        "merchant_category": transaction.merchant_category,
+        "amount": float(transaction.amount),
+        "currency": transaction.currency,
+        "payment_method": transaction.payment_method,
+        "country": transaction.country,
+        "city": transaction.city,
+        "risk_score": float(transaction.risk_score),
+        "fraud_status": transaction.fraud_status,
+        "transaction_time": transaction.transaction_time,
+    }
+
