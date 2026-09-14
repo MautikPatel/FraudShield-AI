@@ -43,6 +43,11 @@ def print_result(
     )
 
     print(
+        f"Rule Decision: "
+        f"{result['rule_decision']}"
+    )
+
+    print(
         f"ML Fraud Probability: "
         f"{result['ml_fraud_probability'] * 100:.2f}%"
     )
@@ -53,8 +58,13 @@ def print_result(
     )
 
     print(
-        f"Hybrid Risk Score: "
-        f"{result['hybrid_risk_score']}"
+        f"Weighted Hybrid Score: "
+        f"{result['weighted_hybrid_score']}"
+    )
+
+    print(
+        f"Final Risk Score: "
+        f"{result['final_risk_score']}"
     )
 
     print(
@@ -65,6 +75,11 @@ def print_result(
     print(
         f"Rule Reasons: "
         f"{result['rule_reasons']}"
+    )
+
+    print(
+        f"ML Prediction: "
+        f"{result['ml_prediction']}"
     )
 
 

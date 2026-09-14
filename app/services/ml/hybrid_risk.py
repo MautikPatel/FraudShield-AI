@@ -31,6 +31,9 @@ def calculate_hybrid_risk(transaction: dict):
     """
     Calculate the final hybrid risk score by combining
     Rule Engine risk and ML fraud probability.
+
+    Deterministic BLOCK decisions are preserved as
+    hard controls and cannot be overridden by ML.
     """
 
     # ----------------------------------------------
@@ -44,6 +47,16 @@ def calculate_hybrid_risk(transaction: dict):
     )
 
     rule_risk_score = rule_result["risk_score"]
+
+    rule_decision = (
+        "BLOCKED"
+        if rule_risk_score >= BLOCK_THRESHOLD
+        else (
+            "REVIEW"
+            if rule_risk_score >= REVIEW_THRESHOLD
+            else "APPROVED"
+        )
+    )
 
     # ----------------------------------------------
     # ML Model
@@ -62,34 +75,42 @@ def calculate_hybrid_risk(transaction: dict):
     )
 
     # ----------------------------------------------
-    # Hybrid Score
+    # Weighted Hybrid Score
     # ----------------------------------------------
 
-    hybrid_score = (
+    weighted_score = (
         rule_risk_score * RULE_WEIGHT
         +
         ml_risk_score * ML_WEIGHT
     )
 
-    hybrid_score = min(
-        hybrid_score,
+    weighted_score = min(
+        weighted_score,
         MAX_RISK_SCORE,
     )
 
-    hybrid_score = round(
-        hybrid_score,
+    weighted_score = round(
+        weighted_score,
         2,
     )
 
     # ----------------------------------------------
     # Final Decision
     # ----------------------------------------------
+    #
+    # A deterministic BLOCK rule is treated as a
+    # hard control and cannot be overridden by ML.
+    # ----------------------------------------------
 
-    if hybrid_score >= BLOCK_THRESHOLD:
+    if rule_decision == "BLOCKED":
 
         final_decision = "BLOCKED"
 
-    elif hybrid_score >= REVIEW_THRESHOLD:
+    elif weighted_score >= BLOCK_THRESHOLD:
+
+        final_decision = "BLOCKED"
+
+    elif weighted_score >= REVIEW_THRESHOLD:
 
         final_decision = "REVIEW"
 
@@ -98,11 +119,34 @@ def calculate_hybrid_risk(transaction: dict):
         final_decision = "APPROVED"
 
     # ----------------------------------------------
+    # Final Risk Score
+    # ----------------------------------------------
+
+    if final_decision == "BLOCKED":
+        final_risk_score = max(
+            weighted_score,
+            rule_risk_score,
+        )
+    else:
+        final_risk_score = weighted_score
+
+    final_risk_score = min(
+        final_risk_score,
+        MAX_RISK_SCORE,
+    )
+
+    final_risk_score = round(
+        final_risk_score,
+        2,
+    )
+
+    # ----------------------------------------------
     # Return Result
     # ----------------------------------------------
 
     return {
         "rule_risk_score": rule_risk_score,
+        "rule_decision": rule_decision,
         "ml_fraud_probability": round(
             ml_fraud_probability,
             4,
@@ -111,7 +155,8 @@ def calculate_hybrid_risk(transaction: dict):
             ml_risk_score,
             2,
         ),
-        "hybrid_risk_score": hybrid_score,
+        "weighted_hybrid_score": weighted_score,
+        "final_risk_score": final_risk_score,
         "final_decision": final_decision,
         "rule_reasons": rule_result["reasons"],
         "ml_prediction": ml_result[
