@@ -155,14 +155,14 @@ fraudshield-ai/
 
 ### Phase 2 — MVP Development
 
-- [ ] Project Setup
-- [ ] Transaction Simulator
-- [ ] Rule Engine
-- [ ] Risk Scoring Engine
-- [ ] ML Fraud Detection Model
-- [ ] PostgreSQL Integration
-- [ ] FastAPI Backend
-- [ ] Dashboard
+- [x] Project Setup
+- [x] Transaction Simulator
+- [x] Rule Engine
+- [x] Risk Scoring Engine
+- [x] ML Fraud Detection Model
+- [x] PostgreSQL Integration
+- [x] FastAPI Backend
+- [x] Dashboard
 
 ### Phase 3 — AI Capabilities
 

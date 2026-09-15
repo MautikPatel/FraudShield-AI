@@ -24,6 +24,9 @@ from app.services.ml.hybrid_risk import (
     calculate_hybrid_risk,
 )
 
+from app.services.ml.explainability import (
+    generate_decision_explanation,
+)
 
 router = APIRouter(
     prefix="/transactions",
@@ -43,6 +46,10 @@ def generate_one_transaction():
     result = calculate_hybrid_risk(
         transaction
     )
+
+    explanation = generate_decision_explanation(
+        result
+)
 
     transaction["risk_score"] = result[
         "final_risk_score"
@@ -99,6 +106,7 @@ def generate_one_transaction():
         "model_name": result[
             "model_name"
         ],
+        "explanation": explanation,
     }
 
 
@@ -113,6 +121,10 @@ def generate_one_fraud_transaction():
 
     result = calculate_hybrid_risk(
         transaction
+    )
+
+    explanation = generate_decision_explanation(
+        result
     )
 
     transaction["risk_score"] = result[
@@ -170,6 +182,8 @@ def generate_one_fraud_transaction():
         "model_name": result[
             "model_name"
         ],
+
+        "explanation": explanation,
     }
 
 
