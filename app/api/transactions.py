@@ -28,6 +28,13 @@ from app.services.ml.explainability import (
     generate_decision_explanation,
 )
 
+from app.services.transaction_service import (
+    get_risk_distribution,
+    get_risky_countries,
+    get_risky_merchant_categories,
+    get_high_risk_transactions,
+)
+
 router = APIRouter(
     prefix="/transactions",
     tags=["Transactions"],
@@ -259,6 +266,56 @@ def get_all_transactions(
             "risk_score": float(
                 transaction.risk_score
             ),
+            "fraud_status": transaction.fraud_status,
+            "transaction_time": transaction.transaction_time,
+        }
+        for transaction in transactions
+    ]
+
+@router.get("/analytics/risk-distribution")
+def risk_distribution():
+    """
+    Return transaction distribution by fraud status.
+    """
+
+    return get_risk_distribution()
+
+
+@router.get("/analytics/countries")
+def risky_countries():
+    """
+    Return countries ranked by average risk.
+    """
+
+    return get_risky_countries()
+
+
+@router.get("/analytics/merchant-categories")
+def risky_merchant_categories():
+    """
+    Return merchant categories ranked by average risk.
+    """
+
+    return get_risky_merchant_categories()
+
+@router.get("/analytics/high-risk")
+def high_risk_transactions():
+    """
+    Return recent high-risk transactions
+    for fraud monitoring.
+    """
+
+    transactions = get_high_risk_transactions()
+
+    return [
+        {
+            "transaction_id": transaction.transaction_id,
+            "merchant_name": transaction.merchant_name,
+            "merchant_category": transaction.merchant_category,
+            "amount": float(transaction.amount),
+            "currency": transaction.currency,
+            "country": transaction.country,
+            "risk_score": float(transaction.risk_score),
             "fraud_status": transaction.fraud_status,
             "transaction_time": transaction.transaction_time,
         }
