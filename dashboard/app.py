@@ -287,6 +287,16 @@ def get_api_data(endpoint: str, params: dict | None = None):
 
     return response.json()
 
+def get_transaction_detail(transaction_id: str,):
+    """
+    Return detailed transaction information,
+    including fraud decision explanation.
+    """
+
+    return get_api_data(
+        f"/transactions/{transaction_id}"
+    )
+
 
 @st.cache_data(ttl=CACHE_TTL_SECONDS)
 def load_dashboard_data():
@@ -1112,6 +1122,34 @@ elif navigation == "Transactions":
             == selected_transaction_id
         ].iloc[0]
 
+
+        selected_transaction_id = selected_transaction[
+            "transaction_id"
+        ]
+
+        try:
+            selected_detail = get_transaction_detail(
+                selected_transaction_id
+            )
+        except Exception:
+            selected_detail = None
+
+        # ---------------------------------------------------------
+        # Transaction Detail
+        # ---------------------------------------------------------
+
+        selected_transaction_id = selected_transaction[
+            "transaction_id"
+        ]
+
+        try:
+            selected_detail = get_transaction_detail(
+                selected_transaction_id
+            )
+        except Exception:
+            selected_detail = None
+
+
         detail1, detail2, detail3 = st.columns(3)
 
         with detail1:
@@ -1119,33 +1157,149 @@ elif navigation == "Transactions":
                 '<div class="detail-grid-title">Transaction</div>',
                 unsafe_allow_html=True,
             )
-            st.write(f"ID: `{selected_transaction['transaction_id']}`")
-            st.write(f"Merchant: {selected_transaction['merchant_name']}")
-            st.write(f"Category: {selected_transaction['merchant_category']}")
-            st.write(f"Amount: ${float(selected_transaction['amount']):,.2f}")
+
+            st.write(
+                f"ID: `{selected_transaction['transaction_id']}`"
+            )
+            st.write(
+                f"Merchant: {selected_transaction['merchant_name']}"
+            )
+            st.write(
+                f"Category: {selected_transaction['merchant_category']}"
+            )
+            st.write(
+                f"Amount: ${float(selected_transaction['amount']):,.2f}"
+            )
+
 
         with detail2:
             st.markdown(
                 '<div class="detail-grid-title">Payment Context</div>',
                 unsafe_allow_html=True,
             )
-            st.write(f"Country: {selected_transaction['country']}")
-            st.write(f"Payment Method: {selected_transaction['payment_method']}")
+
             st.write(
-                f"Transaction Time: {selected_transaction['transaction_time']}"
+                f"Country: {selected_transaction['country']}"
             )
+            st.write(
+                f"Payment Method: "
+                f"{selected_transaction['payment_method']}"
+            )
+            st.write(
+                f"Transaction Time: "
+                f"{selected_transaction['transaction_time']}"
+            )
+
 
         with detail3:
             st.markdown(
                 '<div class="detail-grid-title">Risk Assessment</div>',
                 unsafe_allow_html=True,
             )
+
             st.metric(
                 "Risk Score",
                 f"{float(selected_transaction['risk_score']):.2f}",
             )
+
             st.write(
                 f"Decision: **{selected_transaction['fraud_status']}**"
+            )
+
+            if selected_detail:
+                explanation = selected_detail.get(
+                    "explanation",
+                    {},
+                )
+
+                if explanation:
+                    st.write(
+                        f"Risk Level: "
+                        f"**{explanation.get('risk_level', 'N/A')}**"
+                    )
+
+
+        # ---------------------------------------------------------
+        # AI Decision Explanation
+        # ---------------------------------------------------------
+
+        if selected_detail:
+            explanation = selected_detail.get(
+                "explanation",
+                {},
+            )
+
+            if explanation:
+                st.markdown(
+                    '<div class="detail-grid-title">'
+                    'AI Decision Explanation'
+                    '</div>',
+                    unsafe_allow_html=True,
+                )
+
+                st.markdown(
+                    f'<div class="detail-grid-title">'
+                    f'{explanation.get("headline", "Fraud Risk Assessment")}'
+                    f'</div>',
+                    unsafe_allow_html=True,
+                )
+
+                st.write(
+                    explanation.get(
+                        "natural_language_insight",
+                        explanation.get("summary", ""),
+                    )
+                )
+
+                signal_col, basis_col = st.columns(2)
+
+                with signal_col:
+                    st.markdown("**Key Signals**")
+
+                    key_signals = explanation.get(
+                        "key_signals",
+                        [],
+                    )
+
+                    if key_signals:
+                        for signal in key_signals:
+                            st.write(f"• {signal}")
+                    else:
+                        st.write(
+                            "• No significant risk signals detected."
+                        )
+
+                with basis_col:
+                    st.markdown("**Decision Basis**")
+
+                    st.write(
+                        explanation.get(
+                            "decision_basis",
+                            "Not available.",
+                        )
+                    )
+
+                    st.markdown("**ML Signal**")
+
+                    st.write(
+                        explanation.get(
+                            "ml_signal",
+                            "Not available.",
+                        )
+                    )
+
+                st.markdown("**Recommended Action**")
+
+                st.write(
+                    explanation.get(
+                        "recommended_action",
+                        "No action specified.",
+                    )
+                )
+
+        else:
+            st.info(
+                "Transaction explanation is currently unavailable."
             )
 
     else:

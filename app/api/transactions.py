@@ -332,12 +332,51 @@ def get_transaction_statistics():
     return get_transaction_stats()
 
 
+# @router.get("/{transaction_id}")
+# def get_single_transaction(
+#     transaction_id: str
+# ):
+#     """
+#     Return a single transaction by transaction ID.
+#     """
+
+#     transaction = get_transaction_by_id(
+#         transaction_id
+#     )
+
+#     if transaction is None:
+#         return {
+#             "message": "Transaction not found.",
+#             "transaction_id": transaction_id,
+#         }
+
+#     return {
+#         "id": transaction.id,
+#         "transaction_id": transaction.transaction_id,
+#         "customer_id": transaction.customer_id,
+#         "merchant_id": transaction.merchant_id,
+#         "merchant_name": transaction.merchant_name,
+#         "merchant_category": transaction.merchant_category,
+#         "amount": float(transaction.amount),
+#         "currency": transaction.currency,
+#         "payment_method": transaction.payment_method,
+#         "country": transaction.country,
+#         "city": transaction.city,
+#         "risk_score": float(
+#             transaction.risk_score
+#         ),
+#         "fraud_status": transaction.fraud_status,
+#         "transaction_time": transaction.transaction_time,
+#     }
+
+
 @router.get("/{transaction_id}")
 def get_single_transaction(
     transaction_id: str
 ):
     """
-    Return a single transaction by transaction ID.
+    Return a single transaction by transaction ID
+    with hybrid fraud decision explanation.
     """
 
     transaction = get_transaction_by_id(
@@ -349,6 +388,23 @@ def get_single_transaction(
             "message": "Transaction not found.",
             "transaction_id": transaction_id,
         }
+
+    transaction_data = {
+    "amount": float(transaction.amount),
+    "merchant_category": transaction.merchant_category,
+    "payment_method": transaction.payment_method,
+    "country": transaction.country,
+    "city": transaction.city,
+    "transaction_time": transaction.transaction_time,
+    }
+
+    hybrid_result = calculate_hybrid_risk(
+        transaction_data
+    )
+
+    explanation = generate_decision_explanation(
+        hybrid_result
+    )
 
     return {
         "id": transaction.id,
@@ -367,4 +423,6 @@ def get_single_transaction(
         ),
         "fraud_status": transaction.fraud_status,
         "transaction_time": transaction.transaction_time,
+
+        "explanation": explanation,
     }
