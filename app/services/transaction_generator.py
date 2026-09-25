@@ -160,6 +160,102 @@ def generate_suspicious_transaction():
         "updated_at": datetime.utcnow(),
     }
 
+def generate_review_transaction():
+    """
+    Generate a borderline-risk transaction intended
+    for manual review.
+
+    The transaction is intentionally constructed with
+    moderate-risk characteristics. The API validates the
+    final hybrid score before saving it.
+    """
+
+    review_merchants = [
+        ("Apple", "Electronics"),
+        ("Best Buy", "Electronics"),
+        ("Samsung Store", "Electronics"),
+        ("Hilton", "Travel"),
+        ("Airbnb", "Travel"),
+        ("Gucci", "Luxury"),
+    ]
+
+    merchant_name, merchant_category = random.choice(
+        review_merchants
+    )
+
+    country, city = random.choice(
+        NORMAL_COUNTRIES
+    )
+
+    # Keep the amount in a moderate/high range.
+    # The hybrid engine ultimately determines whether
+    # the transaction qualifies for REVIEW.
+    amount_ranges = {
+        "Electronics": (3000, 4500),
+        "Travel": (1500, 3000),
+        "Luxury": (1500, 3500),
+    }
+
+    minimum, maximum = amount_ranges[
+        merchant_category
+    ]
+
+    return {
+        "transaction_id": str(uuid.uuid4()),
+        "customer_id": f"CUST{random.randint(1000,9999)}",
+        "merchant_id": f"MER{random.randint(100,999)}",
+        "merchant_name": merchant_name,
+        "merchant_category": merchant_category,
+        "amount": Decimal(
+            str(
+                round(
+                    random.uniform(
+                        minimum,
+                        maximum,
+                    ),
+                    2,
+                )
+            )
+        ),
+        "currency": "USD",
+        "payment_method": random.choice(
+            PAYMENT_METHODS
+        ),
+        "country": country,
+        "city": city,
+        "device_id": (
+            f"DEV{random.randint(100000,999999)}"
+        ),
+        "ip_address": (
+            f"192.168."
+            f"{random.randint(1,255)}."
+            f"{random.randint(1,255)}"
+        ),
+        "risk_score": Decimal("0.00"),
+        "fraud_status": "PENDING",
+        "transaction_time": datetime.utcnow(),
+        "created_at": datetime.utcnow(),
+        "updated_at": datetime.utcnow(),
+    }
+
+
+def generate_review_transactions(count: int):
+    """
+    Generate review-oriented transaction candidates.
+
+    The API validates each candidate using the hybrid
+    Rule + ML engine before saving it.
+    """
+
+    transactions = []
+
+    for _ in range(count):
+        transactions.append(
+            generate_review_transaction()
+        )
+
+    return transactions
+
 def generate_fraud_transaction():
     """
     Generate a high-risk fraudulent transaction.
@@ -227,5 +323,14 @@ def generate_transactions(count: int):
 
     for _ in range(count):
         transactions.append(generate_transaction())
+
+    return transactions
+
+def generate_fraud_transactions(count: int):
+    transactions = []
+
+    for _ in range(count):
+        transaction = generate_fraud_transaction()
+        transactions.append(transaction)
 
     return transactions

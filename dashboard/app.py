@@ -33,6 +33,11 @@ st.set_page_config(
     page_icon=None,
     layout="wide",
     initial_sidebar_state="expanded",
+    menu_items={
+        "Get Help": None,
+        "Report a bug": None,
+        "About": None,
+    },
 )
 
 
@@ -318,7 +323,7 @@ def load_dashboard_data():
         ),
         "transactions": get_api_data(
             "/transactions/",
-            params={"limit": 100},
+            params={"limit": 1000},
         ),
         "health": get_api_data("/health"),
     }
@@ -345,16 +350,23 @@ with st.sidebar:
         '<div class="nav-label">Monitoring</div>',
         unsafe_allow_html=True,
     )
-
+    
     navigation = st.radio(
-        "Navigation",
-        [
-            "Dashboard",
-            "Transactions",
-            "Alerts",
-        ],
-        label_visibility="collapsed",
-    )
+    "Navigation",
+    [
+        "Dashboard",
+        "Transactions",
+        "Alerts",
+    ],
+    label_visibility="collapsed",
+)
+
+    if "page_override" not in st.session_state:
+        st.session_state["page_override"] = None
+
+    if st.session_state["page_override"]:
+        navigation = st.session_state["page_override"]
+        st.session_state["page_override"] = None
 
     st.markdown(
         '<div class="nav-label">Management</div>',
@@ -542,7 +554,7 @@ if navigation == "Dashboard":
         )
 
         fig.update_layout(
-            height=310,
+            height=500,
             margin=dict(
                 l=20,
                 r=20,
@@ -830,7 +842,7 @@ if navigation == "Dashboard":
 
     if not alerts_df.empty:
 
-        alerts_df = alerts_df.head(8).copy()
+        alerts_df = alerts_df.head(80).copy()
 
         alerts_display = alerts_df[
             [
@@ -1314,6 +1326,9 @@ elif navigation == "Transactions":
 # ============================================================
 # ALERTS
 # ============================================================
+# ============================================================
+# ALERTS
+# ============================================================
 
 elif navigation == "Alerts":
 
@@ -1341,7 +1356,9 @@ elif navigation == "Alerts":
         )
         st.stop()
 
-    a1, a2, a3 = st.columns(3)
+    # --------------------------------------------------------
+    # Alert Summary
+    # --------------------------------------------------------
 
     blocked_alerts = (
         alerts_df["fraud_status"]
@@ -1361,9 +1378,11 @@ elif navigation == "Alerts":
         .max()
     )
 
+    a1, a2, a3, a4 = st.columns(4)
+
     with a1:
         st.metric(
-            "High-Risk Alerts",
+            "Active Alerts",
             f"{len(alerts_df):,}",
         )
 
@@ -1375,56 +1394,193 @@ elif navigation == "Alerts":
 
     with a3:
         st.metric(
+            "Review Required",
+            f"{review_alerts:,}",
+        )
+
+    with a4:
+        st.metric(
             "Highest Risk Score",
             f"{highest_risk:.0f}",
         )
 
     st.write("")
 
-    alert_display = alerts_df[
-        [
-            "transaction_id",
-            "merchant_name",
-            "merchant_category",
-            "amount",
-            "currency",
-            "country",
-            "risk_score",
-            "fraud_status",
-            "transaction_time",
+    # --------------------------------------------------------
+    # Alert Queue
+    # --------------------------------------------------------
+
+    st.markdown(
+        '<div class="section-heading">'
+        "Active High-Risk Alerts"
+        "</div>",
+        unsafe_allow_html=True,
+    )
+
+    st.caption(
+        "Highest-risk transactions are shown first."
+    )
+
+    # Highest risk first
+    alerts_df = alerts_df.sort_values(
+        by=["risk_score", "transaction_time"],
+        ascending=[False, False],
+    ).reset_index(drop=True)
+
+    # --------------------------------------------------------
+    # Alert Cards
+    # --------------------------------------------------------
+
+    for index, alert in alerts_df.iterrows():
+
+        risk_score = float(
+            alert["risk_score"]
+        )
+
+        decision = alert[
+            "fraud_status"
         ]
-    ].copy()
 
-    alert_display.columns = [
-        "Transaction ID",
-        "Merchant",
-        "Category",
-        "Amount",
-        "Currency",
-        "Country",
-        "Risk Score",
-        "Decision",
-        "Transaction Time",
-    ]
+        merchant = alert[
+            "merchant_name"
+        ]
 
-    alert_display["Amount"] = alert_display[
-        "Amount"
-    ].map(
-        lambda value: f"{float(value):,.2f}"
-    )
+        category = alert[
+            "merchant_category"
+        ]
 
-    alert_display["Risk Score"] = alert_display[
-        "Risk Score"
-    ].map(
-        lambda value: f"{float(value):.0f}"
-    )
+        amount = float(
+            alert["amount"]
+        )
 
-    st.dataframe(
-        alert_display,
-        use_container_width=True,
-        hide_index=True,
-        height=600,
-    )
+        currency = alert[
+            "currency"
+        ]
+
+        country = alert[
+            "country"
+        ]
+
+        transaction_id = alert[
+            "transaction_id"
+        ]
+
+        transaction_time = alert[
+            "transaction_time"
+        ]
+
+        # Derive the primary rule signals from
+        # the same fraud rules used by the engine.
+        signals = []
+
+        if amount >= 6000:
+            signals.append(
+                "Very High Amount"
+            )
+        elif amount >= 3000:
+            signals.append(
+                "High Amount"
+            )
+
+        if country in [
+            "Russia",
+            "North Korea",
+            "Iran",
+        ]:
+            signals.append(
+                "High Risk Country"
+            )
+
+        if category in [
+            "Electronics",
+            "Luxury",
+        ]:
+            signals.append(
+                "High Risk Merchant"
+            )
+
+        try:
+            transaction_hour = (
+                pd.to_datetime(
+                    transaction_time
+                ).hour
+            )
+
+            if (
+                transaction_hour >= 23
+                or transaction_hour < 5
+            ):
+                signals.append(
+                    "Night Transaction"
+                )
+
+        except Exception:
+            pass
+
+        signal_text = (
+            " • ".join(signals)
+            if signals
+            else "Elevated hybrid risk score"
+        )
+
+        with st.container(
+            border=True
+        ):
+
+            alert_col1, alert_col2 = st.columns(
+                [5, 1]
+            )
+
+            with alert_col1:
+
+                st.markdown(
+                    f"**{decision}**  "
+                    f"Risk Score: **{risk_score:.0f}**"
+                )
+
+                st.markdown(
+                    f"**{merchant}**"
+                )
+
+                st.caption(
+                    f"{category} • "
+                    f"{currency} "
+                    f"{amount:,.2f} • "
+                    f"{country}"
+                )
+
+                st.markdown(
+                    f"**Risk Signals:** "
+                    f"{signal_text}"
+                )
+
+                st.caption(
+                    f"Transaction ID: "
+                    f"`{transaction_id}` • "
+                    f"{transaction_time}"
+                )
+
+            with alert_col2:
+
+                st.write("")
+
+                if st.button(
+                    "View Transaction",
+                    key=f"alert_{transaction_id}",
+                    use_container_width=True,
+                ):
+
+                    st.session_state[
+                        "selected_transaction_id"
+                    ] = transaction_id
+
+                    st.session_state[
+                        "page_override"
+                    ] = "Transactions"
+
+                    st.rerun()
+                    
+    st.write("")
 
     st.caption(
         "Risk score is the final hybrid Rule + ML decision score. "

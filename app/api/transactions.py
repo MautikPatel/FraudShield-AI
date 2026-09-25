@@ -6,10 +6,14 @@ Endpoints for transaction operations.
 
 from fastapi import APIRouter
 
+
 from app.services.transaction_generator import (
     generate_transaction,
     generate_transactions,
     generate_fraud_transaction,
+    generate_fraud_transactions,
+    generate_review_transaction,
+    generate_review_transactions,
 )
 
 from app.services.transaction_service import (
@@ -117,6 +121,206 @@ def generate_one_transaction():
     }
 
 
+@router.post("/generate/review")
+def generate_one_review_transaction():
+    """
+    Generate one transaction that qualifies for
+    manual review based on the hybrid Rule + ML
+    risk engine.
+    """
+
+    max_attempts = 50
+
+    for _ in range(max_attempts):
+
+        transaction = generate_review_transaction()
+
+        result = calculate_hybrid_risk(
+            transaction
+        )
+
+        if result["final_decision"] == "REVIEW":
+
+            explanation = (
+                generate_decision_explanation(
+                    result
+                )
+            )
+
+            transaction["risk_score"] = (
+                result["final_risk_score"]
+            )
+
+            transaction["fraud_status"] = (
+                result["final_decision"]
+            )
+
+            saved = save_transaction(
+                transaction
+            )
+
+            return {
+                "message": (
+                    "Review transaction created successfully"
+                ),
+                "id": saved.id,
+                "transaction_id": (
+                    saved.transaction_id
+                ),
+                "merchant": saved.merchant_name,
+                "amount": float(saved.amount),
+                "country": saved.country,
+                "rule_risk_score": (
+                    result["rule_risk_score"]
+                ),
+                "ml_fraud_probability": (
+                    result["ml_fraud_probability"]
+                ),
+                "ml_risk_score": (
+                    result["ml_risk_score"]
+                ),
+                "weighted_hybrid_score": (
+                    result["weighted_hybrid_score"]
+                ),
+                "final_risk_score": (
+                    result["final_risk_score"]
+                ),
+                "final_decision": (
+                    result["final_decision"]
+                ),
+                "rule_reasons": (
+                    result["rule_reasons"]
+                ),
+                "ml_prediction": (
+                    result["ml_prediction"]
+                ),
+                "model_name": (
+                    result["model_name"]
+                ),
+                "explanation": explanation,
+            }
+
+    return {
+        "message": (
+            "Unable to generate a REVIEW transaction "
+            "within the maximum number of attempts."
+        ),
+        "generated": 0,
+    }
+
+@router.post("/generate/review/{count}")
+def generate_multiple_review_transactions(
+    count: int
+):
+    """
+    Generate multiple transactions that qualify for
+    manual review based on the hybrid Rule + ML
+    risk engine.
+    """
+
+    if count <= 0:
+        return {
+            "message": "Count must be greater than zero.",
+            "generated": 0,
+        }
+
+    transactions = []
+
+    max_attempts = max(
+        count * 20,
+        50,
+    )
+
+    attempts = 0
+
+    while (
+        len(transactions) < count
+        and attempts < max_attempts
+    ):
+
+        attempts += 1
+
+        transaction = (
+            generate_review_transaction()
+        )
+
+        result = calculate_hybrid_risk(
+            transaction
+        )
+
+        if result["final_decision"] != "REVIEW":
+            continue
+
+        transaction["risk_score"] = (
+            result["final_risk_score"]
+        )
+
+        transaction["fraud_status"] = (
+            result["final_decision"]
+        )
+
+        transactions.append(
+            transaction
+        )
+
+    total = save_transactions(
+        transactions
+    )
+
+    return {
+        "message": (
+            f"{total} review transactions "
+            "generated successfully."
+        ),
+        "generated": total,
+        "requested": count,
+        "attempts": attempts,
+    }
+
+@router.post("/generate/{count}")
+def generate_multiple_transactions(
+    count: int
+):
+    """
+    Generate multiple transactions, evaluate each using
+    the hybrid Rule + ML risk engine, and save them.
+    """
+
+    if count <= 0:
+        return {
+            "message": "Count must be greater than zero."
+        }
+
+    transactions = generate_transactions(
+        count
+    )
+
+    for transaction in transactions:
+
+        result = calculate_hybrid_risk(
+            transaction
+        )
+
+        transaction["risk_score"] = result[
+            "final_risk_score"
+        ]
+
+        transaction["fraud_status"] = result[
+            "final_decision"
+        ]
+
+    total = save_transactions(
+        transactions
+    )
+
+    return {
+        "message": (
+            f"{total} transactions generated successfully."
+        ),
+        "generated": total,
+    }
+
+
 @router.post("/generate/fraud")
 def generate_one_fraud_transaction():
     """
@@ -193,14 +397,14 @@ def generate_one_fraud_transaction():
         "explanation": explanation,
     }
 
-
-@router.post("/generate/{count}")
-def generate_multiple_transactions(
+@router.post("/generate/fraud/{count}")
+def generate_multiple_fraud_transactions(
     count: int
 ):
     """
-    Generate multiple transactions, evaluate each using
-    the hybrid Rule + ML risk engine, and save them.
+    Generate multiple high-risk fraud transactions,
+    evaluate each using the hybrid Rule + ML risk engine,
+    and save them.
     """
 
     if count <= 0:
@@ -208,7 +412,7 @@ def generate_multiple_transactions(
             "message": "Count must be greater than zero."
         }
 
-    transactions = generate_transactions(
+    transactions = generate_fraud_transactions(
         count
     )
 
@@ -232,10 +436,11 @@ def generate_multiple_transactions(
 
     return {
         "message": (
-            f"{total} transactions generated successfully."
+            f"{total} fraud transactions generated successfully."
         ),
         "generated": total,
     }
+
 
 
 @router.get("/")
