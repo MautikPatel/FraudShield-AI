@@ -18,11 +18,13 @@
 </p>
 
 ---
+![](docs/images/Header.png)
 
-
+---
 
 ## ⚡ At a Glance
 
+| | |
 |---|---|
 | 🎯 **Problem** | Identify potentially fraudulent payment transactions while balancing automated decisions with manual review |
 | 🧠 **Approach** | Rule Engine + Machine Learning + Hybrid Risk Aggregation |
