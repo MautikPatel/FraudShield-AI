@@ -130,7 +130,6 @@ The goal is to demonstrate the **complete journey from transaction → risk asse
 | 🔎 Explanation Layer | Converts decision signals into human-readable insights |
 | 🖥️ Streamlit Dashboard | Visualizes operational fraud intelligence |
 
----tree --gitignore
 
 # 📊 Operational Dashboard
 
@@ -148,6 +147,9 @@ FraudShield AI includes an operational Streamlit dashboard designed around three
 ![FraudShield AI Dashboard](docs/images/Dashboard1.png)
 ![FraudShield AI Dashboard](docs/images/Dashboard2.png)
 ![FraudShield AI Dashboard](docs/images/Dashboard3.png)
+![FraudShield AI Dashboard](docs/images/Transaction1.png)
+![FraudShield AI Dashboard](docs/images/Transaction2.png)
+![FraudShield AI Dashboard](docs/images/Alerts.png)
 
 ---
 
