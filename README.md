@@ -24,7 +24,7 @@
 
 ## ⚡ At a Glance
 
-| | |
+| **Aspect** | **Details** |
 |---|---|
 | 🎯 **Problem** | Identify potentially fraudulent payment transactions while balancing automated decisions with manual review |
 | 🧠 **Approach** | Rule Engine + Machine Learning + Hybrid Risk Aggregation |
@@ -51,8 +51,6 @@ FraudShield AI is an **end-to-end payment fraud detection prototype** designed t
 - 📊 Fraud analytics
 - 🌐 REST APIs
 - 🖥️ Operational monitoring
-
-The goal is not simply to build a fraud model.
 
 The goal is to demonstrate the **complete journey from transaction → risk assessment → decision → explanation → analytics**.
 
@@ -350,17 +348,20 @@ Provides:
 - Risk signals
 - Direct navigation to transaction details
 
-![FraudShield AI Dashboard](docs/images/dashboard-overview.png)
+| **📈 Dashboard** | **💳 Transactions** | **🚨 Alerts** |
+|---|---|---|
+| Transaction volume | Transaction search | High-risk transaction monitoring |
+| Approved / Review / Blocked distribution | Risk filtering | Alert prioritization |
+| Risk trends | Decision filtering | Risk signals |
+| Country analytics | Transaction-level details | Direct navigation to transaction details |
+| Merchant-category analytics | Fraud signals | |
+| High-risk transaction insights | AI-assisted decision explanation | |
+
+![FraudShield AI Dashboard](docs/images/Dashboard1.png)
+![FraudShield AI Dashboard](docs/images/Dashboard2.png)
+![FraudShield AI Dashboard](docs/images/Dashboard3.png)
 
 ---
-
-# 🎬 Product Demo
-
-> **Interactive demo:** transaction generation → fraud scoring → decision → explanation → dashboard.
-
-<p align="center">
-  <img src="docs/demo/fraudshield-demo.gif" alt="FraudShield AI Product Demo" width="100%">
-</p>
 
 ### Demo flow
 
@@ -389,6 +390,9 @@ View in Dashboard
 FraudShield AI exposes REST APIs through FastAPI.
 
 ### Core Transaction APIs
+
+![FraudShield AI API](docs/images/API_EndPoints.png.png)
+
 
 | Method | Endpoint | Purpose |
 |:---:|---|---|
