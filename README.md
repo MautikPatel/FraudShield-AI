@@ -130,7 +130,7 @@ The goal is to demonstrate the **complete journey from transaction → risk asse
 | 🔎 Explanation Layer | Converts decision signals into human-readable insights |
 | 🖥️ Streamlit Dashboard | Visualizes operational fraud intelligence |
 
----
+---tree --gitignore
 
 # 📊 Operational Dashboard
 
@@ -438,36 +438,43 @@ The database provides the persistence layer for both operational transaction wor
 
 ```text
 FraudShield-AI/
-│
-├── app/
-│   ├── api/
-│   ├── database/
-│   ├── models/
-│   └── services/
-│       ├── ml/
+├── alembic/                    # Database migrations
+│   └── versions/
+├── app/                        # Main application code
+│   ├── api/                    # FastAPI route handlers
+│   │   └── transactions.py
+│   ├── core/                   # Configuration, constants, logging, version
+│   ├── database/               # SQLAlchemy base, session, connection utils
+│   ├── models/                 # SQLAlchemy models (e.g. Transaction)
+│   ├── schemas/                # Pydantic schemas
+│   └── services/               # Business logic
+│       ├── ml/                 # ML pipeline
+│       │   ├── dataset_generator.py
+│       │   ├── feature_engineering.py
+│       │   ├── train.py
+│       │   ├── predict.py
+│       │   ├── hybrid_risk.py
+│       │   └── explainability.py
 │       ├── rule_engine.py
 │       ├── transaction_generator.py
 │       └── transaction_service.py
-│
-├── configs/
+├── artifacts/                  # Trained model artifacts (e.g. fraud_model.joblib)
+├── configs/                    # Rule configurations
 │   └── rules.py
-│
+├── dashboard/                  # Streamlit dashboard
+│   └── app.py
 ├── datasets/
-│   ├── raw/
-│   └── processed/
-│
-├── artifacts/
-│   └── fraud_model.joblib
-│
-├── docs/
-│   ├── images/
-│   └── demo/
-│
-├── tests/
-│
+│   ├── raw/                    # Original transaction data
+│   └── processed/              # Feature-engineered data
+├── docs/                       # Project documentation
+│   ├── architecture/           # System design docs
+│   ├── product/                # Product requirements & vision
+│   └── images/                 # Diagrams and screenshots
+├── logs/                       # Application logs
+├── .env.example                # Environment variable template
+├── alembic.ini
 ├── requirements.txt
-├── README.md
-└── .gitignore
+└── README.md
 ```
 
 ---
