@@ -132,6 +132,25 @@ The goal is to demonstrate the **complete journey from transaction → risk asse
 
 ---
 
+# 📊 Operational Dashboard
+
+FraudShield AI includes an operational Streamlit dashboard designed around three common workflows:
+
+| **📈 Dashboard** | **💳 Transactions** | **🚨 Alerts** |
+|---|---|---|
+| Transaction volume | Transaction search | High-risk transaction monitoring |
+| Approved / Review / Blocked distribution | Risk filtering | Alert prioritization |
+| Risk trends | Decision filtering | Risk signals |
+| Country analytics | Transaction-level details | Direct navigation to transaction details |
+| Merchant-category analytics | Fraud signals | |
+| High-risk transaction insights | AI-assisted decision explanation | |
+
+![FraudShield AI Dashboard](docs/images/Dashboard1.png)
+![FraudShield AI Dashboard](docs/images/Dashboard2.png)
+![FraudShield AI Dashboard](docs/images/Dashboard3.png)
+
+---
+
 # 🚦 Fraud Decisioning
 
 The core product decision is based on a **hybrid risk score** rather than relying exclusively on rules or machine learning.
@@ -313,85 +332,13 @@ The explanation layer converts available fraud signals into structured, human-re
 
 ---
 
-# 📊 Operational Dashboard
-
-FraudShield AI includes an operational Streamlit dashboard designed around three common workflows:
-
-### 📈 Dashboard
-
-Provides:
-
-- Transaction volume
-- Approved / Review / Blocked distribution
-- Risk trends
-- Country analytics
-- Merchant-category analytics
-- High-risk transaction insights
-
-### 💳 Transactions
-
-Provides:
-
-- Transaction search
-- Risk filtering
-- Decision filtering
-- Transaction-level details
-- Fraud signals
-- AI-assisted decision explanation
-
-### 🚨 Alerts
-
-Provides:
-
-- High-risk transaction monitoring
-- Alert prioritization
-- Risk signals
-- Direct navigation to transaction details
-
-| **📈 Dashboard** | **💳 Transactions** | **🚨 Alerts** |
-|---|---|---|
-| Transaction volume | Transaction search | High-risk transaction monitoring |
-| Approved / Review / Blocked distribution | Risk filtering | Alert prioritization |
-| Risk trends | Decision filtering | Risk signals |
-| Country analytics | Transaction-level details | Direct navigation to transaction details |
-| Merchant-category analytics | Fraud signals | |
-| High-risk transaction insights | AI-assisted decision explanation | |
-
-![FraudShield AI Dashboard](docs/images/Dashboard1.png)
-![FraudShield AI Dashboard](docs/images/Dashboard2.png)
-![FraudShield AI Dashboard](docs/images/Dashboard3.png)
-
----
-
-### Demo flow
-
-```text
-Generate Transaction
-        ↓
-Evaluate Rules
-        ↓
-Run ML Prediction
-        ↓
-Calculate Hybrid Risk
-        ↓
-APPROVE / REVIEW / BLOCK
-        ↓
-Persist to PostgreSQL
-        ↓
-Generate Explanation
-        ↓
-View in Dashboard
-```
-
----
-
 # 🌐 REST API
 
 FraudShield AI exposes REST APIs through FastAPI.
 
 ### Core Transaction APIs
 
-![FraudShield AI API](docs/images/API_EndPoints.png.png)
+![FraudShield AI API](docs/images/API_EndPoints.png)
 
 
 | Method | Endpoint | Purpose |
